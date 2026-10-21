@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JARVIS V3</title>
+<style>
+body{margin:0;background:#000;color:#0ff;font-family:Arial;display:flex;flex-direction:column;align-items:center;padding:15px;min-height:100vh}
+h1{font-size:38px;text-shadow:0 0 20px #0ff;letter-spacing:3px}
+#orb{width:160px;height:160px;border:4px solid #0ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:80px;margin:20px;box-shadow:0 0 50px #0ff;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 40px #0ff}50%{box-shadow:0 0 80px #0ff}}
+#s{background:#001a1a;border:1px solid #0ff;padding:18px;border-radius:14px;min-height:70px;max-width:360px;text-align:center;font-size:17px;margin:10px}
+button{padding:22px 60px;font-size:24px;font-weight:bold;background:#0ff;color:#000;border:0;border-radius:50px;box-shadow:0 0 30px #0ff;margin:15px}
+</style></head>
+<body>
+<h1>JARVIS</h1>
+<div id="orb">◉</div>
+<div id="s">Sistemas online senhor<br>Toque em ATIVAR</div>
+<button onclick="ativar()">🎤 ATIVAR JARVIS</button>
+<script>
+let voz=null;
+function carregarVoz(){let v=speechSynthesis.getVoices();voz=v.find(x=>x.name.includes('Daniel'))||v.find(x=>x.lang=='pt-BR')||v[0]}
+speechSynthesis.onvoiceschanged=carregarVoz;carregarVoz();
+function falar(t,cb){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);if(voz)u.voice=voz;u.lang='pt-BR';u.rate=0.88;u.pitch=0.75;u.onend=()=>{if(cb)cb()};speechSynthesis.speak(u);document.getElementById('s').innerText=t}
+function executar(c){let co=c.toLowerCase();document.getElementById('s').innerText='Você: '+c;
+if(co.match(/\b(oi|ola)\b/)){falar('Olá senhor, como posso ajudar?');return}
+if(co.includes('hora')){falar('Agora são '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+', senhor');return}
+if(co.includes('whatsapp')||co.includes('zap')){falar('Abrindo WhatsApp senhor',()=>{location.href='whatsapp://'});return}
+if(co.includes('youtube')){falar('Abrindo YouTube senhor',()=>window.open('https://m.youtube.com/','_blank'));return}
+if(co.includes('quem é você')){falar('Eu sou o Jarvis senhor, seu assistente pessoal do filme');return}
+falar('Entendido senhor, pesquisando '+c,()=>window.open('https://www.google.com/search?q='+encodeURIComponent(c),'_blank'))}
+function ativar(){let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Use o Chrome');return}let r=new SR();r.lang='pt-BR';document.getElementById('s').innerText='Ouvindo senhor...';r.onresult=e=>{executar(e.results[0][0].transcript)};r.start()}
+window.onload=()=>{setTimeout(()=>{carregarVoz();falar('Sistemas online senhor, sou o Jarvis, pronto')},800)}
+</script>
+</body>
+  </html>
