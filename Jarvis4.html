@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS 4 - 2026 EDITION</title>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<style>
+ body{margin:0;background:#000;color:#00e5ff;font-family:monospace;overflow:hidden}
+ #top{padding:11px;text-align:center;background:linear-gradient(90deg,#000,#ff0000,#000);color:#fff;letter-spacing:4px;position:fixed;top:0;width:100%;z-index:10;font-size:13px;font-weight:bold;border-bottom:2px solid #ff0000}
+ #lab{margin-top:42px;position:relative;width:100vw;height:44vh;background:#000}
+ #video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+ canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+ #btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);padding:18px 32px;background:linear-gradient(90deg,#ff0000,#00e5ff);color:#fff;border:none;font-weight:bold;z-index:20;border-radius:30px;font-size:16px;box-shadow:0 0 20px #ff0000}
+ #name{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#ff0000;padding:6px 16px;color:#fff;font-weight:bold;z-index:5;border-radius:4px;box-shadow:0 0 10px #ff0000}
+ #cats{display:flex;gap:5px;padding:7px;background:#0a0a0a;overflow-x:auto;position:fixed;top:calc(44vh + 42px);width:100%;z-index:6;border-top:1px solid #222;border-bottom:1px solid #ff0000}
+ .cat{padding:8px 13px;border:1px solid #333;font-size:10px;white-space:nowrap;background:#000;color:#888;border-radius:20px}
+ .cat.ativo{background:#fff;color:#000;border-color:#fff;box-shadow:0 0 12px #fff}
+ #grid{margin-top:44px;height:36vh;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:6px;background:#050505}
+ .hero{border:1px solid #1a1a1a;padding:0;text-align:center;font-size:9px;background:linear-gradient(180deg,#111,#000);border-radius:10px;overflow:hidden}
+ .hero .icon{height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:36px;background:radial-gradient(circle,#1a1a1a,#000);position:relative}
+ .hero .icon span.year{position:absolute;bottom:2px;right:4px;font-size:8px;background:#ff0000;color:#fff;padding:1px 4px;border-radius:3px}
+ .hero .label{padding:7px 2px;background:#000;color:#fff;font-weight:bold;font-size:8.5px;letter-spacing:0.3px}
+ .hero.ativo{border-color:#00e5ff;box-shadow:0 0 18px #00e5ff;transform:scale(1.03)}
+ .hero.ativo .label{background:#00e5ff;color:#000}
+ #search{position:fixed;bottom:0;width:100%;display:flex;background:#000;border-top:2px solid #00e5ff}
+ #search input{flex:1;background:#000;border:none;color:#fff;padding:14px;font-family:monospace}
+ #search button{background:#00e5ff;color:#000;border:none;padding:14px 18px;font-weight:bold}
+</style>
+</head>
+<body>
+<div id="top">⚡ JARVIS 4 - 2026 EDITION - FILMES ATUAIS ⚡</div>
+<div id="lab">
+ <video id="video" autoplay muted playsinline></video>
+ <canvas id="canvas"></canvas>
+ <div id="name">DEADPOOL & WOLVERINE - EQUIPADO</div>
+ <button id="btn">ATIVAR 2026</button>
+</div>
+<div id="cats">
+ <div class="cat ativo" onclick="filtrar('ALL')">TUDO 2026</div>
+ <div class="cat" onclick="filtrar('2026')">NOVOS 2026</div>
+ <div class="cat" onclick="filtrar('DEAD')">DEADPOOL & WOLV</div>
+ <div class="cat" onclick="filtrar('CAP')">BRAVE NEW WORLD</div>
+ <div class="cat" onclick="filtrar('THUNDER')">THUNDERBOLTS*</div>
+ <div class="cat" onclick="filtrar('F4')">FANTASTIC 4</div>
+ <div class="cat" onclick="filtrar('DC2025')">DC 2025</div>
+</div>
+<div id="grid"></div>
+<div id="search"><input id="q" placeholder="Adicionar: Superman 2025, Batman 2..."><button onclick="buscar()">ADD</button></div>
+
+<script>
+let filtro='ALL', atual=0;
+const heroes=[
+ {id:'DEADPOOL & WOLVERINE', cat:'DEAD', icon:'🔴', year:'2024'},
+ {id:'WOLVERINE CLASSIC', cat:'DEAD', icon:'🐺', year:'2024'},
+ {id:'CAP SAM WILSON', cat:'CAP', icon:'🛡️', year:'2025'},
+ {id:'RED HULK - ROSS', cat:'CAP', icon:'🔴', year:'2025'},
+ {id:'FALCON NEW SUIT', cat:'CAP', icon:'🦅', year:'2025'},
+ {id:'SENTRY THUNDERBOLTS', cat:'THUNDER', icon:'⭐', year:'2025'},
+ {id:'YELENA BELOVA', cat:'THUNDER', icon:'⚪', year:'2025'},
+ {id:'WINTER SOLDIER NEW', cat:'THUNDER', icon:'🦾', year:'2025'},
+ {id:'RED GUARDIAN', cat:'THUNDER', icon:'🛡️', year:'2025'},
+ {id:'FANTASTIC FOUR MR', cat:'F4', icon:'4️⃣', year:'2025'},
+ {id:'HUMAN TORCH 2025', cat:'F4', icon:'🔥', year:'2025'},
+ {id:'INVISIBLE WOMAN', cat:'F4', icon:'👩', year:'2025'},
+ {id:'THING F4', cat:'F4', icon:'🪨', year:'2025'},
+ {id:'SUPERMAN JAMES GUNN', cat:'DC2025', icon:'🦸', year:'2025'},
+ {id:'BATMAN 2 ROBERT', cat:'DC2025', icon:'🦇', year:'2026'},
+ {id:'IRONHEART MARK 2', cat:'2026', icon:'💜', year:'2026'},
+ {id:'ARMOR WARS RHODEY', cat:'2026', icon:'🤖', year:'2026'},
+ {id:'SPIDER BRAND NEW DAY', cat:'2026', icon:'🕷️', year:'2026'},
+ {id:'VENOM 3 LAST DANCE', cat:'2026', icon:'👅', year:'2024'},
+ {id:'THOR SECRET WARS', cat:'2026', icon:'⚡', year:'2026'},
+ {id:'MARK 85 LEGACY', cat:'2026', icon:'♾️', year:'2026'},
+];
+
+function getLista(){return filtro=='ALL'?heroes:heroes.filter(h=>h.cat==filtro||h.cat=='2026'&&filtro=='2026'?true:h.cat==filtro)}
+function render(){
+ const lista=filtro=='ALL'?heroes:heroes.filter(h=>h.cat==filtro || (filtro=='2026'&&['2026','CAP','THUNDER','F4','DC2025','DEAD'].includes(h.cat)?false:h.cat==filtro) || (filtro!='ALL'&&filtro==h.cat));
+ // Correção simples
+ const finalLista = filtro=='ALL'?heroes:heroes.filter(h=>h.cat==filtro);
+ const grid=document.getElementById('grid');
+ grid.innerHTML='';
+ (filtro=='ALL'?heroes:finalLista).forEach((h)=>{
+  const real=heroes.indexOf(h);
+  const d=document.createElement('div');
+  d.className='hero'+(real==atual?' ativo':'');
+  d.innerHTML=`<div class="icon">${h.icon}<span class="year">${h.year}</span></div><div class="label">${h.id}</div>`;
+  d.onclick=()=>selecionar(real);
+  grid.appendChild(d);
+ });
+}
+function selecionar(i){atual=i;document.getElementById('name').innerText=heroes[i].id+' - EQUIPADO';render()}
+function filtrar(c){filtro=c;document.querySelectorAll('.cat').forEach(e=>e.classList.remove('ativo'));event.target.classList.add('ativo');render()}
+function buscar(){const q=document.getElementById('q').value;if(!q)return;heroes.unshift({id:q.toUpperCase(),cat:'2026',icon:'🆕',year:'2026'});document.getElementById('q').value='';selecionar(0)}
+render();
+const video=document.getElementById('video'),canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),btn=document.getElementById('btn');
+const hands=new Hands({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+hands.setOptions({maxNumHands:1,modelComplexity:0,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
+hands.onResults((r)=>{
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.drawImage(r.image,0,0,canvas.width,canvas.height);
+ if(r.multiHandLandmarks[0]){
+  const lm=r.multiHandLandmarks[0];const x=lm[8].x*canvas.width,y=lm[8].y*canvas.height;
+  const pinch=Math.hypot(lm[4].x-lm[8].x,lm[4].y-lm[8].y)<0.06;
+  ctx.beginPath();ctx.arc(x,y,pinch?24:11,0,Math.PI*2);ctx.fillStyle=pinch?'#ff0000':'#00e5ff';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.2;ctx.stroke();
+ }
+});
+const camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video})},width:320,height:240});
+btn.onclick=()=>{btn.style.display='none';canvas.width=320;canvas.height=240;camera.start()};
+</script>
+</body>
+  </html>
