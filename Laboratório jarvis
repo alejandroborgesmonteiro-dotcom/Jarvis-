@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>FT_SUIT_LAB_MOBILE</title>
+<style>
+body{margin:0;background:#000;color:#00e5ff;font-family:monospace;overflow:hidden}
+#video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0.3;z-index:0}
+#c{position:fixed;inset:0;z-index:1;pointer-events:none}
+#ui{position:fixed;top:0;left:0;right:0;z-index:5;padding:10px;background:linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)}
+h1{font-size:16px;text-align:center;letter-spacing:2px;text-shadow:0 0 10px #00e5ff}
+#suits{display:flex;gap:8px;overflow-x:auto;padding:10px 5px;scroll-behavior:smooth}
+.suit{flex:0 0 110px;background:rgba(0,20,40,0.85);border:1px solid #00e5ff;border-radius:12px;padding:6px;text-align:center;transition:0.2s;box-shadow:0 0 15px rgba(0,229,255,0.3)}
+.suit.selected{border-color:#fff;box-shadow:0 0 30px #00e5ff;transform:scale(1.1);z-index:2;background:rgba(0,229,255,0.2)}
+.suit .holo{height:140px;background:radial-gradient(circle at 50% 100%, rgba(0,229,255,0.4), transparent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:50px;position:relative}
+.suit .holo::after{content:'';position:absolute;bottom:5px;left:10%;right:10%;height:3px;background:#00e5ff;box-shadow:0 0 10px #00e5ff;border-radius:50%}
+.suit b{font-size:10px;display:block;margin-top:6px}
+.suit span{font-size:8px;opacity:0.7}
+#controls{position:fixed;bottom:0;left:0;right:0;z-index:5;background:rgba(0,10,20,0.95);border-top:1px solid #00e5ff;padding:12px;border-radius:18px 18px 0 0}
+#gest{color:#fff;text-align:center;font-size:14px;margin-bottom:8px;min-height:20px}
+.btns{display:flex;gap:8px}
+button{flex:1;background:#00e5ff;color:#000;border:0;padding:12px;border-radius:12px;font-weight:bold;font-size:13px}
+button.out{background:transparent;color:#00e5ff;border:1px solid #00e5ff}
+#cursor{position:fixed;width:30px;height:30px;border:2px solid #00e5ff;border-radius:50%;z-index:20;pointer-events:none;transform:translate(-50%,-50%);box-shadow:0 0 10px #00e5ff}
+#cursor.pinch{background:rgba(0,229,255,0.8);transform:translate(-50%,-50%) scale(0.5)}
+</style>
+</head>
+<body>
+<video id="video" autoplay playsinline muted></video>
+<canvas id="c"></canvas>
+<div id="cursor"></div>
+<div id="ui">
+<h1>🕷️ SPIDER LAB 17 • GESTOS</h1>
+<div id="suits">
+<div class="suit" data-id="1"><div class="holo">🕸️</div><b>SUIT-01 STEALTH</b><span>CLIQUE / PINÇA</span></div>
+<div class="suit" data-id="2"><div class="holo">🦸</div><b>SUIT-02 CLASSIC</b><span>VERMELHO/AZUL</span></div>
+<div class="suit selected" data-id="3"><div class="holo">🤖</div><b>SUIT-03 ARMOR</b><span>ATUAL</span></div>
+<div class="suit" data-id="4"><div class="holo">🦇</div><b>SUIT-04 WEB-WING</b><span>ASA</span></div>
+<div class="suit" data-id="5"><div class="holo">🥷</div><b>SUIT-05 STRIKE</b><span>TÁTICO</span></div>
+</div>
+</div>
+<div id="controls">
+<div id="gest">👉 Clique em ATIVAR pra começar</div>
+<div class="btns">
+<button id="btn">ATIVAR CÂMERA + GESTOS</button>
+<button id="deploy" class="out">[ DEPLOY ]</button>
+</div>
+<div style="font-size:9px;text-align:center;opacity:0.6;margin-top:6px">🤏 PINÇA sobre o traje = SELECIONA | 👋 Mão aberta = ROLA | 👐 2 mãos = ZOOM | ✊ Punho = SOLTA</div>
+</div>
+<script type="module">
+const video=document.getElementById('video'), btn=document.getElementById('btn'), gest=document.getElementById('gest'), cursor=document.getElementById('cursor'), suitsDiv=document.getElementById('suits');
+let selected=document.querySelector('.suit.selected');
+function selectSuit(el){
+document.querySelectorAll('.suit').forEach(s=>s.classList.remove('selected'));
+el.classList.add('selected'); selected=el;
+gest.textContent=`✅ ${el.querySelector('b').textContent} SELECIONADO`;
+try{speechSynthesis.speak(new SpeechSynthesisUtterance(`Traje selecionado`))}catch{}
+el.scrollIntoView({behavior:'smooth',inline:'center'});
+}
+document.querySelectorAll('.suit').forEach(s=>s.onclick=()=>selectSuit(s));
+document.getElementById('deploy').onclick=()=>{ if(selected){ gest.textContent=`🚀 DEPLOY ${selected.querySelector('b').textContent}!!!`; selected.animate([{transform:'scale(1.1)'},{transform:'scale(1.5)'},{transform:'scale(1.1)'}],{duration:800});}};
+let dragging=false, lastX=0;
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function isPinch(lm){return Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y)<0.06}
+btn.onclick=async()=>{
+btn.textContent='CARREGANDO GOOGLE...';
+const {HandLandmarker,FilesetResolver}=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.12/vision_bundle.mjs');
+const vision=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.12/wasm');
+const landmarker=await HandLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:'GPU'},numHands:2,runningMode:'VIDEO'});
+const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+video.srcObject=stream; await video.play();
+btn.textContent='ATIVO 🟢';
+gest.textContent='Mostre sua mão pra câmera';
+let lastT=0;
+async function loop(t){
+if(t-lastT>32){
+const res=landmarker.detectForVideo(video,t);
+const lms=res.landmarks;
+if(lms && lms.length>0){
+const h=lms[0]; const ix=h[8]; const cx=(1-ix.x)*innerWidth; const cy=ix.y*innerHeight;
+cursor.style.left=cx+'px'; cursor.style.top=cy+'px'; cursor.style.opacity=1;
+const pinch=isPinch(h); cursor.classList.toggle('pinch',pinch);
+if(pinch){
+if(!dragging){ const el=document.elementFromPoint(cx,cy); const suit=el?.closest('.suit'); if(suit){ selectSuit(suit); dragging=true; lastX=cx; } }
+else{ const dx=cx-lastX; if(Math.abs(dx)>15){ suitsDiv.scrollLeft-=dx; lastX=cx; }}
+} else { dragging=false; }
+if(lms.length==2){ const d=dist(lms[0][0], lms[1][0]); if(d>0.6){ gest.textContent='👐 ZOOM'; document.querySelectorAll('.suit').forEach(s=>s.style.transform='scale(1.15)'); } else if(d<0.3){ document.querySelectorAll('.suit').forEach(s=>s.style.transform=''); }}
+} else { cursor.style.opacity=0; }
+lastT=t;
+}
+requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+};
+</script>
+</body>
+</html>
