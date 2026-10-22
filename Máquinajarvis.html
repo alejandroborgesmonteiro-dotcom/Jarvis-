@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARK JETJET - MÁQUINA</title>
+<style>
+body{margin:0;background:#01060f;overflow:hidden;height:100vh;display:flex;align-items:center;justify-content:center}
+.maquina{width:90vw;height:80vh;border:2px solid #00f0ff;box-shadow:0 0 50px #00f0ff, inset 0 0 100px rgba(0,240,255,0.1);position:relative;background:linear-gradient(#0a1a33,#000);border-radius:10px}
+.luz{position:absolute;height:3px;background:#00f0ff;box-shadow:0 0 15px #00f0ff;animation:piscar 1.5s infinite}
+@keyframes piscar{0%,100%{opacity:1}50%{opacity:0.3}}
+.braco{position:absolute;width:80px;height:120px;border:2px solid #555;border-radius:10px;background:#111;box-shadow:0 0 10px #00f0ff}
+.holo{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:70%;height:45%;border:1px solid #00f0ff;background:rgba(0,240,255,0.05);box-shadow:0 0 30px #00f0ff;display:flex;align-items:center;justify-content:center;color:#00f0ff;font-family:monospace;animation:flutuar 3s infinite}
+@keyframes flutuar{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-5px)}}
+</style>
+</head>
+<body>
+<div class="maquina">
+<div class="luz" style="top:20%;width:100%"></div>
+<div class="luz" style="bottom:20%;width:100%;animation-delay:0.7s"></div>
+<div class="luz" style="left:10%;top:0;width:3px;height:100%;animation-delay:0.3s"></div>
+<div class="luz" style="right:10%;top:0;width:3px;height:100%;animation-delay:1s"></div>
+<div class="braco" style="left:5%;top:40%"></div>
+<div class="braco" style="right:5%;top:40%"></div>
+<div class="holo">[ STARK JETJET - FABRICATION BAY ]<br>LUZ AZUL SIMULANDO - PRONTA</div>
+<div style="position:absolute;bottom:10%;left:50%;transform:translateX(-50%);width:60%;height:30%;border:2px dashed rgba(0,240,255,0.3);border-radius:10px"></div>
+</div>
+</body>
+  </html>
