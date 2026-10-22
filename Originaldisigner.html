@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARK JET LAB - REALIDADE</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#02060f; color:#7df9ff; font-family:monospace; height:100vh; overflow:hidden}
+.bg{position:fixed; inset:0; background: radial-gradient(circle at 50% 20%, #102040 0%, #02060f 70%);}
+.container{position:relative; width:100vw; height:100vh; display:flex; justify-content:center; align-items:center}
+.suit{width:360px; height:78vh; position:relative; border-radius:18px; overflow:hidden; box-shadow:0 0 60px #00e5ff, inset 0 0 20px #00e5ff; background:#111;}
+.suit-top{height:38%; background: linear-gradient(180deg, #b71c1c 0%, #e53935 25%, #8e0e0e 50%, #c62828 100%); position:relative}
+.muscle{position:absolute; background: linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(255,255,255,0.2) 50%, rgba(0,0,0,0.4) 100%); border-radius:10px}
+.muscle1{left:15%; top:15%; width:30%; height:65%; transform:rotate(-5deg)}
+.muscle2{right:15%; top:15%; width:30%; height:65%; transform:rotate(5deg)}
+.spider{position:absolute; left:50%; top:55%; transform:translate(-50%,-50%); font-size:50px; filter: drop-shadow(0 0 10px silver)}
+.suit-mid{height:10%; background: linear-gradient(90deg,#0d47a1,#1565c0,#0d47a1); display:flex; align-items:center; justify-content:center; border-top:2px solid #000; border-bottom:2px solid #000}
+.belt{width:70%; height:14px; background:#222; border:2px solid #555; display:flex; justify-content:space-around}
+.suit-bottom{height:52%; background: linear-gradient(180deg,#0d47a1 0%, #0a2a5c 100%); position:relative}
+.leg-left,.leg-right{position:absolute; top:0; width:46%; height:100%; background: linear-gradient(180deg,#0d47a1,#081f3d)}
+.leg-left{left:2%; transform:rotate(-2deg); border-radius:0 0 20px 20px}
+.leg-right{right:2%; transform:rotate(2deg); border-radius:0 0 20px 20px}
+.web{position:absolute; inset:0; opacity:0.3; background: repeating-linear-gradient(0deg, transparent 0 18px, rgba(0,0,0,0.6) 19px), repeating-linear-gradient(90deg, transparent 0 18px, rgba(0,0,0,0.6) 19px)}
+.eyes{position:absolute; top:4%; left:50%; transform:translateX(-50%); width:160px; height:70px; display:flex; justify-content:space-between}
+.eye{width:65px; height:45px; background: radial-gradient(ellipse, #e0f7ff 0%, #7df9ff 40%, #002 100%); border:3px solid #000; transform: skew(-10deg); box-shadow: 0 0 20px #7df9ff, inset 0 0 10px #fff; animation: blink 4s infinite}
+.eye.right{transform: skew(10deg) scaleX(-1)}
+@keyframes blink{0%,90%,100%{height:45px}95%{height:2px}}
+.hud{position:absolute; border:1px solid #00e5ff; background: rgba(0,20,40,0.7); padding:10px; border-radius:10px; font-size:10px; box-shadow:0 0 15px rgba(0,229,255,0.4)}
+.hud-left{left:1%; top:5%; width:28%}
+.hud-right{right:1%; top:15%; width:26%}
+.title{font-size:14px; font-weight:bold; text-shadow:0 0 8px #00e5ff; margin-bottom:6px}
+.btn{border:1px solid #00e5ff; background: rgba(0,229,255,0.15); color:#7df9ff; padding:8px 12px; border-radius:20px; cursor:pointer; font-size:9px; margin:3px}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="hud hud-left">
+<div class="title">SUIT DESIGNER<br>STARK JET LAB</div>
+DESIGN: SPIDER-SUIT MARK VII<br><b style="color:#00ff88">>> REALIDADE - NAO E MANEQUIM</b><br><br>
+MATERIAL: KEVLAR-NANO + MUSCLE REAL<br>TEXTURA: FOTOREALISTA<br><br>
+MUSCLE: 98%<div style="height:5px;background:rgba(255,255,255,0.2);margin:4px 0"><div style="width:98%;height:100%;background:#00e5ff"></div></div>
+</div>
+<div class="container">
+<div class="suit">
+<div class="web"></div>
+<div class="suit-top"><div class="muscle muscle1"></div><div class="muscle muscle2"></div><div class="spider">🕷️</div></div>
+<div class="suit-mid"><div class="belt"><div style="width:10px;height:10px;background:#444;border-radius:50%"></div><div style="width:10px;height:10px;background:#444;border-radius:50%"></div></div></div>
+<div class="suit-bottom"><div class="leg-left"><div class="web"></div></div><div class="leg-right"><div class="web"></div></div></div>
+<div class="eyes"><div class="eye"></div><div class="eye right"></div></div>
+</div>
+</div>
+<div class="hud hud-right"><b>REALIDADE MODE</b><br><br>COLOR: RED/BLUE REAL<br>PATTERN: MUSCLE DEFINITION<br><br>- Brilho nos olhos<br>- Musculo marcado<br>- Tecido realista<br>- Sombra 3D</div>
+<div class="hud" style="bottom:2%; left:50%; transform:translateX(-50%); width:90%; text-align:center">
+<button class="btn">[CALIBRAR REALIDADE]</button>
+<button class="btn">[STEALTH REAL]</button>
+</div>
+</body>
+  </html>
