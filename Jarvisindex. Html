@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS</title>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<style>
+  body { margin:0; background:#02060d; color:#00d9ff; font-family: 'Courier New', monospace; overflow:hidden; }
+  #header { position:absolute; top:0; left:0; width:100%; padding:15px; background:rgba(0,20,40,0.9); border-bottom:2px solid #00d9ff; text-align:center; letter-spacing:4px; font-weight:bold; z-index:10; box-shadow:0 0 20px #00d9ff; }
+  #video { position:absolute; width:100%; height:100%; object-fit:cover; opacity:0.2; transform:scaleX(-1); }
+  #canvas { position:absolute; width:100%; height:100%; }
+  #lab { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:80%; height:60%; border:1px solid #00d9ff; background:rgba(0,20,40,0.4); display:flex; align-items:center; justify-content:center; box-shadow:0 0 40px rgba(0,217,255,0.3); }
+  #lab img { max-width:90%; max-height:90%; filter:drop-shadow(0 0 20px #00d9ff); }
+  #search { position:absolute; bottom:20px; left:50%; transform:translate(-50%); display:flex; gap:10px; z-index:10; }
+  #search input { background:rgba(0,0,0,0.8); border:1px solid #00d9ff; color:#00d9ff; padding:12px 20px; width:300px; outline:none; }
+  #search button { background:#00d9ff; color:#000; border:none; padding:12px 20px; font-weight:bold; cursor:pointer; }
+  .corner { position:absolute; width:30px; height:30px; border:2px solid #00d9ff; }
+  .tl { top:10px; left:10px; border-right:0; border-bottom:0; }
+  .tr { top:10px; right:10px; border-left:0; border-bottom:0; }
+  .bl { bottom:10px; left:10px; border-right:0; border-top:0; }
+  .br { bottom:10px; right:10px; border-left:0; border-top:0; }
+</style>
+</head>
+<body>
+<div id="header">JARVIS - DEV PROTOCOL - BORGES LAB</div>
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+<div id="lab">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <img id="holo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/681px-Placeholder_view_vector.svg.png" crossorigin="anonymous">
+</div>
+<div id="search">
+  <input id="q" type="text" placeholder="Pesquisar imagem... ex: Homem de Ferro">
+  <button onclick="pesquisar()">PESQUISAR</button>
+</div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const holoImg = document.getElementById('holo-img');
+let imgX=0, imgY=0, imgScale=1, imgRot=0;
+let lastX=0, lastY=0;
+
+function pesquisar(){
+  const query = document.getElementById('q').value;
+  if(!query) return;
+  // Usa Wikipedia + Unsplash como lab de pesquisa
+  holoImg.src = `https://source.unsplash.com/800x600/?${encodeURIComponent(query)}`;
+  document.getElementById('q').value='';
+}
+
+async function initCam(){
+  const stream = await navigator.mediaDevices.getUserMedia({video:true});
+  video.srcObject = stream;
+}
+
+const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+hands.setOptions({maxNumHands:1, modelComplexity:1, minDetectionConfidence:0.7, minTrackingConfidence:0.7});
+
+hands.onResults((results)=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(results.multiHandLandmarks[0]){
+    const lm = results.multiHandLandmarks[0];
+    const x = lm[8].x; // ponta do indicador
+    const y = lm[8].y;
+    const pinch = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
+
+    // Mover
+    if(pinch < 0.05){
+      imgX = (x - 0.5) * 400;
+      imgY = (y - 0.5) * 300;
+    }
+    // Zoom com 2 dedos
+    if(results.multiHandLandmarks[0][12]){ // gesto
+      imgScale = 0.5 + pinch*5;
+    }
+
+    holoImg.style.transform = `translate(${imgX}px, ${imgY}px) scale(${imgScale}) rotate(${imgRot}deg)`;
+
+    // Desenha ponto da mão
+    ctx.fillStyle = '#00d9ff';
+    ctx.beginPath();
+    ctx.arc(x*canvas.width, y*canvas.height, 10, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur=20; ctx.shadowColor='#00d9ff';
+  }
+});
+
+const camera = new Camera(video, {onFrame: async () => { await hands.send({image: video}); }, width:640, height:480});
+camera.start();
+initCam();
+
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='r') imgRot+=15;
+  if(e.key==='ArrowUp') imgScale+=0.1;
+  if(e.key==='ArrowDown') imgScale-=0.1;
+});
+</script>
+</body>
+</html>
