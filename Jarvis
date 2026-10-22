@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MEU LAB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050505;color:#00f0ff;font-family:monospace;overflow:hidden}
+#cam{position:fixed;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0.2;z-index:1}
+#canvas{position:fixed;width:100%;height:100%;z-index:2}
+.ui{position:fixed;z-index:10;width:100%;height:100%;pointer-events:none}
+.top{pointer-events:auto;display:flex;gap:6px;padding:8px;background:rgba(0,0,0,0.8)}
+input,button{pointer-events:auto;background:#000;border:1px solid #00f0ff;color:#00f0ff;padding:10px;border-radius:8px}
+input{flex:1}
+button{background:#00f0ff;color:#000;font-weight:bold}
+#area{position:fixed;top:60px;left:0;width:100%;height:calc(100% - 60px);z-index:5}
+.holo{position:absolute;background:rgba(0,30,40,0.9);border:1px solid #00f0ff;border-radius:10px;padding:5px;min-width:120px;box-shadow:0 0 15px #00f0ff;cursor:grab;touch-action:none}
+.holo img{width:150px;height:100px;object-fit:cover;border-radius:6px;display:block}
+.holo .t{font-size:8px;margin-top:4px;max-width:150px;word-break:break-word}
+.holo .x{position:absolute;top:-8px;right:-8px;background:red;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer}
+</style>
+</head>
+<body>
+<video id="cam" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
+
+<div class="ui">
+<div class="top">
+<input id="q" placeholder="O que você quer pesquisar? ex: reator, logo, mapa...">
+<button id="add">+ ADD</button>
+<button id="btn">ATIVAR</button>
+<input type="file" id="file" accept="image/*" style="display:none">
+<button onclick="document.getElementById('file').click()">📁 MINHA IMAGEM</button>
+</div>
+<div style="text-align:center;font-size:9px;margin-top:4px">🤏 PINÇA NO AR = PEGA E ARRASTA SEU ARQUIVO | 2 MÃOS = AUMENTA</div>
+</div>
+
+<div id="area"></div>
+
+<script type="module">
+import { Hands } from "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js";
+import { Camera } from "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js";
+
+const video=document.getElementById('cam');
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const area=document.getElementById('area');
+const q=document.getElementById('q');
+canvas.width=innerWidth;canvas.height=innerHeight;
+let selected=null;
+
+function criaHolo(src, titulo){
+  const d=document.createElement('div');
+  d.className='holo';
+  d.style.left=Math.random()*60+5+'%';
+  d.style.top=Math.random()*50+10+'%';
+  d.innerHTML=`<div class="x">X</div><img src="${src}"><div class="t">${titulo}</div>`;
+  d.querySelector('.x').onclick=()=>d.remove();
+  let sx=0,sy=0,ox=0,oy=0,down=false;
+  d.addEventListener('pointerdown',e=>{down=true;selected=d;sx=e.clientX;sy=e.clientY;ox=d.offsetLeft;oy=d.offsetTop;d.style.zIndex=100});
+  window.addEventListener('pointermove',e=>{if(!down)return;d.style.left=ox+e.clientX-sx+'px';d.style.top=oy+e.clientY-sy+'px'});
+  window.addEventListener('pointerup',()=>{down=false;selected&& (selected.style.zIndex=5)});
+  area.appendChild(d);
+  return d;
+}
+
+document.getElementById('add').onclick=()=>{
+  const texto=q.value||'meu projeto';
+  criaHolo(`https://picsum.photos/seed/${Date.now()}/200/150`, texto);
+  q.value='';
+};
+
+document.getElementById('file').onchange=e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const url=URL.createObjectURL(file);
+  criaHolo(url, file.name);
+};
+
+const btn=document.getElementById('btn');
+btn.onclick=async()=>{
+  btn.textContent='LIGANDO...';
+  const stream=await navigator.mediaDevices.getUserMedia({video:true});
+  video.srcObject=stream;await video.play();
+  initHands();
+  btn.textContent='ATIVO ✅';
+};
+
+function initHands(){
+  const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+  hands.setOptions({maxNumHands:2,minDetectionConfidence:0.7,minTrackingConfidence:0.7});
+  hands.onResults(r=>{
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(!r.multiHandLandmarks[0])return;
+    const h=r.multiHandLandmarks[0];
+    const thumb=h[4], idx=h[8];
+    const dist=Math.hypot(thumb.x-idx.x,thumb.y-idx.y);
+    const x=idx.x*canvas.width, y=idx.y*canvas.height;
+    ctx.fillStyle=dist<0.05?'#ff0':'#00f0ff';
+    ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();
+    if(dist<0.05 && selected){
+      selected.style.left=(x-selected.offsetWidth/2)+'px';
+      selected.style.top=(y-selected.offsetHeight/2)+'px';
+    }
+  });
+  const cam=new Camera(video,{onFrame:async()=>await hands.send({image:video}),width:640,height:480});
+  cam.start();
+}
+</script>
+</body>
+</html>
