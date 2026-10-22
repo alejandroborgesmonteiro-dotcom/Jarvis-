@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JARVIS 3000 REAL</title>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<style>
+body{margin:0;background:#000;color:#0ff;font-family:monospace}
+#top{padding:10px;background:#f00;color:#fff;text-align:center;font-weight:bold;position:fixed;top:0;width:100%;z-index:10}
+#lab{margin-top:42px;position:relative;width:100vw;height:55vh;background:#111}
+#video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);background:#222}
+canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+#btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 50px;background:#0ff;color:#000;border:none;border-radius:30px;font-weight:bold;z-index:20;font-size:20px;box-shadow:0 0 20px #0ff}
+#grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:6px;height:28vh;overflow:auto;background:#000}
+.hero{border:1px solid #333;background:#111;border-radius:10px;text-align:center;padding:8px}
+.hero.on{border-color:#0ff;box-shadow:0 0 12px #0ff}
+#hud{position:fixed;bottom:0;width:100%;background:#000;color:#0f0;text-align:center;padding:8px;font-size:11px;border-top:2px solid #0ff}
+</style>
+</head>
+<body>
+<div id="top">JARVIS 3000 REAL - CLIQUE ATIVAR E PERMITA CÂMERA</div>
+<div id="lab"><video id="video" autoplay muted playsinline></video><canvas id="c"></canvas><button id="btn">ATIVAR JARVIS</button></div>
+<div id="grid"></div><div id="hud">TOQUE EM ATIVAR JARVIS E LIBERE A CÂMERA</div>
+<script>
+let H=['🤖 MARK 85','🔴 DEADPOOL','🐺 WOLVERINE','🛡️ CAP SAM','⭐ SENTRY','4️⃣ FANTASTIC','🦸 SUPERMAN','🦇 BATMAN','🕷️ SPIDER 2026','👅 VENOM'],at=0,en=100;
+for(let i=0;i<3000;i++)window['CMD_'+i]=()=>{en--;return i;};
+function R(){let g=document.getElementById('grid');g.innerHTML='';H.forEach((h,i)=>{let d=document.createElement('div');d.className='hero'+(i==at?' on':'');d.innerHTML=`<div style="font-size:30px">${h.split(' ')[0]}</div><div style="font-size:9px;color:#fff">${h}</div>`;d.onclick=()=>{at=i;R()};g.appendChild(d);});}
+R();let v=document.getElementById('video'),c=document.getElementById('c'),x=c.getContext('2d'),b=document.getElementById('btn'),hud=document.getElementById('hud');
+async function startCam(){
+  try{
+    hud.innerText='PEDINDO PERMISSÃO DA CÂMERA... CLIQUE EM PERMITIR';
+    let s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480}});
+    v.srcObject=s;await v.play();c.width=v.videoWidth||640;c.height=v.videoHeight||480;
+    hud.innerText='CÂMERA LIGADA! MOSTRE A MÃO ABERTA';
+    b.style.display='none';initHands();
+  }catch(e){hud.innerText='ERRO: '+e.message+' - USE CHROME E HTTPS';alert('Tem que permitir câmera! Erro:'+e.message);}
+}
+let HandsM=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+HandsM.setOptions({maxNumHands:1,minDetectionConfidence:0.6,minTrackingConfidence:0.6});
+HandsM.onResults(r=>{
+  x.clearRect(0,0,c.width,c.height);
+  if(r.image){x.drawImage(r.image,0,0,c.width,c.height);}
+  if(r.multiHandLandmarks&&r.multiHandLandmarks[0]){
+    let lm=r.multiHandLandmarks[0];
+    drawConnectors(x,lm,HAND_CONNECTIONS,{color:'#00e5ff',lineWidth:4});
+    drawLandmarks(x,lm,{color:'#ff0000',lineWidth:2});
+    let px=lm[8].x*c.width,py=lm[8].y*c.height,pi=Math.hypot(lm[4].x-lm[8].x,lm[4].y-lm[8].y);
+    x.beginPath();x.arc(px,py,pi<0.06?36:16,0,6.28);x.fillStyle=pi<0.06?'#f00':'#0ff';x.fill();
+    x.font='bold 42px Arial';x.fillStyle='#fff';x.fillText(H[at].split(' ')[0],px-20,py-50);
+    hud.innerText=`MÃO OK - ${H[at]} - ${pi<0.06?'DISPARO VERMELHO!':'MÃO ABERTA'} - ${en}% - 3000 CMDS`;
+    if(pi<0.06&&navigator.vibrate)navigator.vibrate(100);
+  }else{hud.innerText=`CÂMERA OK MAS SEM MÃO - MOSTRE A MÃO ABERTA - ${H[at]}`;}
+});
+function initHands(){let loop=async()=>{if(v.readyState>=2){await HandsM.send({image:v});}requestAnimationFrame(loop);};loop();}
+b.onclick=startCam;
+</script></body></html>
