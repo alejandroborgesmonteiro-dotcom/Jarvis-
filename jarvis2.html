@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS - HERO VAULT</title>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<style>
+ body{margin:0;background:#020a14;color:#00e5ff;font-family:monospace;overflow:hidden}
+ #top{padding:10px;text-align:center;border-bottom:2px solid #00e5ff;letter-spacing:3px;background:#001e3c;position:fixed;top:0;width:100%;z-index:10;font-size:13px}
+ #lab{margin-top:42px;position:relative;width:100vw;height:48vh;background:#000}
+ #video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+ canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+ #btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);padding:16px 28px;background:#00e5ff;color:#000;border:none;font-weight:bold;z-index:20;border-radius:4px}
+ #name{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);padding:5px 12px;border:1px solid #ff0000;color:#fff;font-weight:bold;z-index:5}
+ #cats{display:flex;gap:4px;padding:6px;background:#000;overflow-x:auto;position:fixed;top:calc(48vh + 42px);width:100%;z-index:6}
+ .cat{padding:6px 10px;border:1px solid #00e5ff;font-size:10px;white-space:nowrap;background:rgba(0,229,255,0.1)}
+ .cat.ativo{background:#00e5ff;color:#000}
+ #grid{margin-top:38px;height:32vh;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:6px;background:rgba(0,10,20,0.95)}
+ .hero{border:1px solid #222;padding:4px;text-align:center;font-size:9px;background:rgba(255,255,255,0.03)}
+ .hero img{width:100%;height:62px;object-fit:cover;border-radius:2px}
+ .hero.ativo{border-color:#ff0000;box-shadow:0 0 12px #ff0000;background:rgba(255,0,0,0.15)}
+ #search{position:fixed;bottom:0;width:100%;display:flex;background:#000;border-top:2px solid #00e5ff}
+ #search input{flex:1;background:#000;border:none;color:#00e5ff;padding:12px;font-family:monospace}
+ #search button{background:#ff0000;color:#fff;border:none;padding:12px 14px;font-weight:bold}
+</style>
+</head>
+<body>
+<div id="top">JARVIS HERO VAULT - 60+ ARMADURAS</div>
+<div id="lab">
+ <video id="video" autoplay muted playsinline></video>
+ <canvas id="canvas"></canvas>
+ <div id="name">MARK 50 - EQUIPADO</div>
+ <button id="btn">ATIVAR MULTIVERSO</button>
+</div>
+<div id="cats">
+ <div class="cat ativo" onclick="filtrar('ALL')">ALL</div>
+ <div class="cat" onclick="filtrar('IRON')">IRON MAN</div>
+ <div class="cat" onclick="filtrar('SPIDER')">SPIDER</div>
+ <div class="cat" onclick="filtrar('THOR')">THOR</div>
+ <div class="cat" onclick="filtrar('VENOM')">VENOM</div>
+ <div class="cat" onclick="filtrar('AVENGERS')">AVENGERS</div>
+ <div class="cat" onclick="filtrar('DC')">DC</div>
+</div>
+<div id="grid"></div>
+<div id="search"><input id="q" placeholder="Digite heroi: thor stormbreaker, batman..."><button onclick="buscar()">ADD HERÓI</button></div>
+
+<script>
+let filtro = 'ALL';
+let atual = 0;
+const allHeroes = [
+ {id:'MARK 3', cat:'IRON', img:'https://images.unsplash.com/photo-1608346128025-1896b97a6fa7?w=400'},
+ {id:'MARK 42', cat:'IRON', img:'https://images.unsplash.com/photo-1636847031116-4e6a64b8acb3?w=400'},
+ {id:'MARK 50 NANO', cat:'IRON', img:'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400'},
+ {id:'MARK 85 ENDGAME', cat:'IRON', img:'https://images.unsplash.com/photo-1608346128025-1896b97a6fa7?w=400'},
+ {id:'HULKBUSTER', cat:'IRON', img:'https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=400'},
+ {id:'WAR MACHINE', cat:'IRON', img:'https://images.unsplash.com/photo-1593085516820-fd1d42fcba6c?w=400'},
+ {id:'RESCUE PEPPER', cat:'IRON', img:'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400'},
+ {id:'SPIDER CLASSIC', cat:'SPIDER', img:'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=400'},
+ {id:'SPIDER STEALTH', cat:'SPIDER', img:'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400'},
+ {id:'IRON SPIDER', cat:'SPIDER', img:'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=400'},
+ {id:'MILES MORALES', cat:'SPIDER', img:'https://images.unsplash.com/photo-1626379616459-b2ce1d9decbc?w=400'},
+ {id:'SPIDER 2099', cat:'SPIDER', img:'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=400'},
+ {id:'VENOM', cat:'VENOM', img:'https://images.unsplash.com/photo-1608346128025-1896b97a6fa7?w=400'},
+ {id:'CARNAGE', cat:'VENOM', img:'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400'},
+ {id:'THOR CLASSIC', cat:'THOR', img:'https://images.unsplash.com/photo-1593085516820-fd1d42fcba6c?w=400'},
+ {id:'THOR STORMBREAKER', cat:'THOR', img:'https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=400'},
+ {id:'THOR LOVE THUNDER', cat:'THOR', img:'https://images.unsplash.com/photo-1531259683007-016a7bbe742f?w=400'},
+ {id:'CAP AMERICA', cat:'AVENGERS', img:'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400'},
+ {id:'BLACK PANTHER', cat:'AVENGERS', img:'https://images.unsplash.com/photo-1608346128025-1896b97a6fa7?w=400'},
+ {id:'DR STRANGE', cat:'AVENGERS', img:'https://images.unsplash.com/photo-1636847031116-4e6a64b8acb3?w=400'},
+ {id:'BATMAN', cat:'DC', img:'https://images.unsplash.com/photo-1531259683007-016a7bbe742f?w=400'},
+ {id:'SUPERMAN', cat:'DC', img:'https://images.unsplash.com/photo-1593085516820-fd1d42fcba6c?w=400'},
+ {id:'FLASH', cat:'DC', img:'https://images.unsplash.com/photo-1626379616459-b2ce1d9decbc?w=400'}
+];
+
+function getLista(){ return filtro=='ALL' ? allHeroes : allHeroes.filter(h=>h.cat==filtro); }
+function render(){
+ const lista = getLista();
+ const grid = document.getElementById('grid');
+ grid.innerHTML='';
+ lista.forEach((h,i)=>{
+  const realIndex = allHeroes.indexOf(h);
+  const d = document.createElement('div');
+  d.className = 'hero' + (realIndex==atual?' ativo':'');
+  d.innerHTML = `<img src="${h.img}" onerror="this.src='https://images.unsplash.com/photo-1636847031116-4e6a64b8acb3?w=400'"><br>${h.id}`;
+  d.onclick = ()=>selecionar(realIndex);
+  grid.appendChild(d);
+ });
+}
+function selecionar(i){
+ atual = i;
+ document.getElementById('name').innerText = allHeroes[i].id + ' - EQUIPADO';
+ render();
+}
+function filtrar(c){
+ filtro=c;
+ document.querySelectorAll('.cat').forEach(el=>el.classList.remove('ativo'));
+ event.target.classList.add('ativo');
+ render();
+}
+function buscar(){
+ const q = document.getElementById('q').value;
+ if(!q) return;
+ const cat = q.toLowerCase().includes('spider')?'SPIDER': q.toLowerCase().includes('thor')?'THOR': q.toLowerCase().includes('venom')?'VENOM':'AVENGERS';
+ allHeroes.unshift({id:q.toUpperCase(), cat:cat, img:`https://source.unsplash.com/400x300/?${encodeURIComponent(q)},superhero`});
+ document.getElementById('q').value=''; filtro='ALL'; selecionar(0);
+}
+render();
+
+// MÃOS
+const video=document.getElementById('video'), canvas=document.getElementById('canvas'), ctx=canvas.getContext('2d'), btn=document.getElementById('btn');
+const hands=new Hands({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+hands.setOptions({maxNumHands:1, modelComplexity:0, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+hands.onResults((r)=>{
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.drawImage(r.image,0,0,canvas.width,canvas.height);
+ if(r.multiHandLandmarks[0]){
+  const lm=r.multiHandLandmarks[0];
+  const x=lm[8].x*canvas.width, y=lm[8].y*canvas.height;
+  const pinch=Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y)<0.06;
+  ctx.beginPath(); ctx.arc(x,y,pinch?20:9,0,Math.PI*2); ctx.fillStyle=pinch?'#ff0000':'#00e5ff'; ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+ }
+});
+const camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video})},width:320,height:240});
+btn.onclick=()=>{btn.style.display='none'; canvas.width=320; canvas.height=240; camera.start();};
+</script>
+</body>
+  </html>
