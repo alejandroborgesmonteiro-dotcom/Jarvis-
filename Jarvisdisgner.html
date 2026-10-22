@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DESIGNER DE TRAJES - STARK JET LAB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#0ff;font-family:monospace;overflow:hidden}
+#top{background:linear-gradient(90deg,#f00,#000);padding:12px;text-align:center;font-weight:bold;color:#fff;letter-spacing:2px}
+#main{display:flex;height:85vh}
+#canvas-area{flex:2;background:#111;position:relative;display:flex;justify-content:center;align-items:center;border:2px solid #0ff}
+#traje-preview{width:280px;height:500px;position:relative}
+.parte-traje{position:absolute;border:2px solid #333;transition:all 0.3s;display:flex;justify-content:center;align-items:center;font-size:10px}
+#mask{top:0;left:70px;width:140px;height:90px;background:var(--cor1);border-radius:50% 50% 20% 20%}
+#olhoE,#olhoD{position:absolute;top:25px;width:40px;height:20px;background:#fff;border-radius:50%;box-shadow:0 0 10px #fff}
+#olhoE{left:15px} #olhoD{right:15px}
+#tronco{top:95px;left:40px;width:200px;height:160px;background:var(--cor1);clip-path:polygon(20% 0,80% 0,100% 100%,0% 100%)}
+#logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:40px}
+#bracoE{top:100px;left:0;width:50px;height:130px;background:var(--cor2);border-radius:20px}
+#bracoD{top:100px;right:0;width:50px;height:130px;background:var(--cor2);border-radius:20px}
+#pernaE{top:260px;left:50px;width:70px;height:200px;background:var(--cor1);border-radius:10px}
+#pernaD{top:260px;right:50px;width:70px;height:200px;background:var(--cor1);border-radius:10px}
+#teia{position:absolute;inset:0;opacity:var(--teia);background:repeating-linear-gradient(0deg,transparent 0 20px,#000 20px 21px),repeating-linear-gradient(90deg,transparent 0 20px,#000 20px 21px)}
+
+#controles{flex:1;background:#000;padding:10px;overflow-y:auto;border-left:2px solid #0ff}
+.grupo{margin-bottom:15px;padding:10px;border:1px solid #333;border-radius:10px;background:#111}
+.grupo h3{font-size:12px;margin-bottom:8px;color:#f00}
+button{padding:6px 10px;margin:3px;border:1px solid #0ff;background:#000;color:#0ff;border-radius:6px;font-size:11px}
+button.ativo{background:#0ff;color:#000;box-shadow:0 0 10px #0ff}
+input[type=color]{width:100%;height:30px;border:none;background:transparent}
+input[type=range]{width:100%}
+#salvar{width:100%;padding:12px;background:#f00;color:#fff;border:none;border-radius:20px;font-weight:bold;margin-top:10px;box-shadow:0 0 15px #f00}
+#hud{position:fixed;bottom:0;width:100%;background:#000;color:#0f0;text-align:center;padding:6px;font-size:10px;border-top:2px solid #0ff}
+</style>
+</head>
+<body>
+<div id="top">🕷️ STARK JET LAB - DESIGNER DE TRAJES - 3000 VARIAÇÕES</div>
+<div id="main">
+<div id="canvas-area">
+<div id="traje-preview" style="--cor1:#f00;--cor2:#00f;--teia:0">
+<div id="mask" class="parte-traje"><div id="olhoE"></div><div id="olhoD"></div><div id="teia"></div></div>
+<div id="tronco" class="parte-traje"><div id="logo">🕷️</div><div id="teia"></div></div>
+<div id="bracoE" class="parte-traje"></div>
+<div id="bracoD" class="parte-traje"></div>
+<div id="pernaE" class="parte-traje"></div>
+<div id="pernaD" class="parte-traje"></div>
+</div>
+</div>
+<div id="controles">
+<div class="grupo"><h3>🎨 COR PRIMÁRIA</h3><input type="color" id="cor1" value="#ff0000"></div>
+<div class="grupo"><h3>🎨 COR SECUNDÁRIA</h3><input type="color" id="cor2" value="#0000ff"></div>
+<div class="grupo"><h3>👁️ FORMATO OLHOS</h3>
+<button onclick="setOlho('normal')" class="ativo">Normal</button>
+<button onclick="setOlho('grande')">Grande</button>
+<button onclick="setOlho('fino')">Fino</button>
+<button onclick="setOlho('raiva')">Raiva</button>
+</div>
+<div class="grupo"><h3>🕷️ LOGO PEITO</h3>
+<button onclick="setLogo('🕷️')" class="ativo">🕷️</button>
+<button onclick="setLogo('🦇')">🦇</button>
+<button onclick="setLogo('⭐')">⭐</button>
+<button onclick="setLogo('💀')">💀</button>
+<button onclick="setLogo('🔥')">🔥</button>
+<button onclick="setLogo('❌')">Sem</button>
+</div>
+<div class="grupo"><h3>🕸️ TEIA</h3>
+<input type="range" id="teiaRange" min="0" max="1" step="0.1" value="0">
+</div>
+<div class="grupo"><h3>✨ ESTILO</h3>
+<button onclick="setEstilo('classico')" class="ativo">Clássico</button>
+<button onclick="setEstilo('futurista')">Futurista</button>
+<button onclick="setEstilo('stealth')">Stealth</button>
+<button onclick="setEstilo('iron')">Iron Spider</button>
+</div>
+<button id="salvar" onclick="salvarTraje()">💾 SALVAR TRAJE - GERAR CÓDIGO</button>
+</div>
+</div>
+<div id="hud">TOQUE NAS CORES E ESTILOS - 3000 COMBINAÇÕES - CLIQUE SALVAR PARA GERAR SEU TRAJE</div>
+<script>
+let preview=document.getElementById('traje-preview');
+let cor1=document.getElementById('cor1'),cor2=document.getElementById('cor2');
+cor1.oninput=()=>preview.style.setProperty('--cor1',cor1.value);
+cor2.oninput=()=>preview.style.setProperty('--cor2',cor2.value);
+document.getElementById('teiaRange').oninput=e=>preview.style.setProperty('--teia',e.target.value);
+function setOlho(t){
+ let e=document.getElementById('olhoE'),d=document.getElementById('olhoD');
+ if(t=='normal'){e.style.cssText='left:15px;width:40px;height:20px';d.style.cssText='right:15px;width:40px;height:20px'}
+ if(t=='grande'){e.style.cssText='left:5px;width:60px;height:40px';d.style.cssText='right:5px;width:60px;height:40px'}
+ if(t=='fino'){e.style.cssText='left:10px;width:50px;height:8px;top:35px';d.style.cssText='right:10px;width:50px;height:8px;top:35px'}
+ if(t=='raiva'){e.style.cssText='left:10px;width:45px;height:25px;transform:rotate(-20deg)';d.style.cssText='right:10px;width:45px;height:25px;transform:rotate(20deg)'}
+}
+function setLogo(l){
+ document.getElementById('logo').innerText=l=='❌'?'':l;
+}
+function setEstilo(s){
+ let p=document.getElementById('traje-preview');
+ if(s=='classico'){p.style.filter='none'}
+ if(s=='futurista'){p.style.filter='drop-shadow(0 0 15px #0ff)'}
+ if(s=='stealth'){cor1.value='#000000';cor2.value='#333333';preview.style.setProperty('--cor1','#000');preview.style.setProperty('--cor2','#333');p.style.filter='brightness(0.5)'}
+ if(s=='iron'){cor1.value='#ff0000';cor2.value='#ffd700';preview.style.setProperty('--cor1','#f00');preview.style.setProperty('--cor2','#ffd700');p.style.filter='drop-shadow(0 0 20px #ff0)'}
+}
+function salvarTraje(){
+ let codigo=`Traje: ${cor1.value} + ${cor2.value} + ${document.getElementById('logo').innerText}`;
+ alert('TRAJE SALVO!\\n'+codigo+'\\n\\nCódigo copiado! Agora você pode usar no seu Jarvis!');
+ if(navigator.vibrate)navigator.vibrate([100,50,100]);
+ document.getElementById('hud').innerText='TRAJE SALVO! '+codigo;
+}
+document.querySelectorAll('.grupo button').forEach(b=>{
+ b.onclick=(e)=>{
+   let grupo=e.target.parentElement;
+   if(grupo.querySelectorAll('button').length>1 && !e.target.innerText.includes('🕷') && !e.target.innerText.includes('🦇')){
+     // só desativa do mesmo grupo se for estilo/olho
+   }
+   if(e.target.parentElement.querySelector('h3').innerText.includes('OLHOS')||e.target.parentElement.querySelector('h3').innerText.includes('ESTILO')){
+     grupo.querySelectorAll('button').forEach(x=>x.classList.remove('ativo'));
+     e.target.classList.add('ativo');
+   }
+   // chama função original
+   if(e.target.getAttribute('onclick'))eval(e.target.getAttribute('onclick'));
+ }
+});
+</script>
+</body>
+  </html>
